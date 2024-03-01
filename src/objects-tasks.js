@@ -349,34 +349,129 @@ function group(array, keySelector, valueSelector) {
  *
  *  For more examples see unit tests.
  */
+class MySuperBaseElementSelector {
+  constructor() {
+    this.value = [];
+    this.template = '';
+    this.selectors = [];
+    this.pattern = [
+      'tag',
+      'id',
+      'class',
+      'attribute',
+      'pseudoClass',
+      'pseudoElement',
+    ];
+  }
+
+  element(value) {
+    this.validate(value, '', 'tag');
+    this.validateOrderSelectors('tag');
+    return this;
+  }
+
+  id(value) {
+    this.validate(value, '#', 'id');
+    this.validateOrderSelectors('id');
+    return this;
+  }
+
+  class(value) {
+    this.value.push(`.${value}`);
+    this.validateOrderSelectors('class');
+    return this;
+  }
+
+  attr(value) {
+    this.value.push(`[${value}]`);
+    this.validateOrderSelectors('attribute');
+    return this;
+  }
+
+  pseudoClass(value) {
+    this.value.push(`:${value}`);
+    this.validateOrderSelectors('pseudoClass');
+    return this;
+  }
+
+  pseudoElement(value) {
+    this.validate(value, '::', 'pseudoElement');
+    this.validateOrderSelectors('pseudoElement');
+    return this;
+  }
+
+  validate(value, selector, selectorTitle) {
+    if (
+      this.selectors.filter((elem) => elem.includes(selectorTitle)).length === 0
+    ) {
+      this.value.push(`${selector}${value}`);
+    } else {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+  }
+
+  validateOrderSelectors(selector) {
+    const indexLastSelectors = this.pattern.indexOf(
+      this.selectors[this.selectors.length - 1]
+    );
+    if (indexLastSelectors <= this.pattern.indexOf(selector)) {
+      if (this.selectors.indexOf(selector) === -1) {
+        this.selectors.push(selector);
+      }
+    } else {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+  }
+
+  combine(selector1, combinator, selector2) {
+    this.value = [...selector1, ` ${combinator} `, ...selector2];
+    return this;
+  }
+
+  stringify(value) {
+    if (value) {
+      return value;
+    }
+    this.template = this.value.join('');
+    return this.template;
+  }
+}
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new MySuperBaseElementSelector().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new MySuperBaseElementSelector().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new MySuperBaseElementSelector().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new MySuperBaseElementSelector().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new MySuperBaseElementSelector().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new MySuperBaseElementSelector().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    return new MySuperBaseElementSelector().combine(
+      selector1.stringify(),
+      combinator,
+      selector2.stringify()
+    );
   },
 };
 
